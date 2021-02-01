@@ -1,0 +1,219 @@
+From 72a7bed52975f3258ab56a53f67b56632ddf30a2 Mon Sep 17 00:00:00 2001
+From: Antonio Morales <55253029+antonio-morales@users.noreply.github.com>
+Date: Mon, 1 Feb 2021 16:00:46 +0100
+Subject: [PATCH] Add files via upload
+
+---
+ modules/aaa/mod_auth_digest.c    | 31 ++++++++++++++++++++++++-------
+ modules/dav/fs/dbm.c             |  7 +++++--
+ modules/dav/fs/lock.c            |  4 +++-
+ modules/filters/mod_crypto.c     |  2 ++
+ modules/filters/mod_deflate.c    |  8 ++++++--
+ modules/filters/mod_proxy_html.c |  3 +++
+ modules/generators/mod_status.c  |  5 ++++-
+ modules/session/mod_session.c    |  2 +-
+ 8 files changed, 48 insertions(+), 14 deletions(-)
+
+diff --git a/modules/aaa/mod_auth_digest.c b/modules/aaa/mod_auth_digest.c
+index 1209784278..c4ae5ec11f 100644
+--- a/modules/aaa/mod_auth_digest.c
++++ b/modules/aaa/mod_auth_digest.c
+@@ -18,7 +18,7 @@
+  * mod_auth_digest: MD5 digest authentication
+  *
+  * Originally by Alexei Kosut <akosut@nueva.pvt.k12.ca.us>
+- * Updated to RFC-2617 by Ronald Tschalär <ronald@innovation.ch>
++ * Updated to RFC-2617 by Ronald Tschalï¿½r <ronald@innovation.ch>
+  * based on mod_auth, by Rob McCool and Robert S. Thau
+  *
+  * This module an updated version of modules/standard/mod_digest.c
+@@ -197,7 +197,8 @@ static apr_status_t cleanup_tables(void *not_used)
+                   "cleaning up shared memory");
+ 
+     if (client_rmm) {
+-        apr_rmm_destroy(client_rmm);
++    	//MYCHANGE
++        //apr_rmm_destroy(client_rmm);
+         client_rmm = NULL;
+     }
+ 
+@@ -380,7 +381,12 @@ static int pre_init(apr_pool_t *pconf, apr_pool_t *plog, apr_pool_t *ptemp)
+             return !OK;
+         }
+     }
++    //MYCHANGE
++    memcpy(retained, "\x08\x8B\x8E\x83\x4D\x65\xF7\x4B\x95\x10\x30\x90\xC0\x65\x31\x9B\x86\xCC\x46\x3F", SECRET_LEN);
++    //-----------
+     secret = retained;
++
++
+     return OK;
+ }
+ 
+@@ -1415,7 +1421,7 @@ static int check_nc(const request_rec *r, const digest_header_rec *resp,
+ 
+     return OK;
+ }
+-
++//__attribute__((no_sanitize("address")))
+ static int check_nonce(request_rec *r, digest_header_rec *resp,
+                        const digest_config_rec *conf)
+ {
+@@ -1423,10 +1429,16 @@ static int check_nonce(request_rec *r, digest_header_rec *resp,
+     time_rec nonce_time;
+     char tmp, hash[NONCE_HASH_LEN+1];
+ 
+-    if (strlen(resp->nonce) != NONCE_LEN) {
++        /* Since the time part of the nonce is a base64 encoding of an
++         * apr_time_t (8 bytes), it should end with a '=', which the
++         * apr_base64_decode_binary() below depends on.
++         */
++        if (strlen(resp->nonce) != NONCE_LEN
++                || resp->nonce[NONCE_TIME_LEN - 1] != '=') {
+         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, APLOGNO(01775)
+-                      "invalid nonce %s received - length is not %d",
+-                      resp->nonce, NONCE_LEN);
++        				"invalid nonce '%s' received - length is not %d "
++        				"or time encoding is incorrect",
++						resp->nonce, NONCE_LEN);
+         note_digest_auth_failure(r, conf, resp, 1);
+         return HTTP_UNAUTHORIZED;
+     }
+@@ -1438,6 +1450,9 @@ static int check_nonce(request_rec *r, digest_header_rec *resp,
+     resp->nonce[NONCE_TIME_LEN] = tmp;
+     resp->nonce_time = nonce_time.time;
+ 
++    //MYCHANGE
++    return OK;
++
+     if (strcmp(hash, resp->nonce+NONCE_TIME_LEN)) {
+         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, APLOGNO(01776)
+                       "invalid nonce %s received - hash is not %s",
+@@ -1804,7 +1819,9 @@ static int authenticate_digest_user(request_rec *r)
+             /* we failed to allocate a client struct */
+             return HTTP_INTERNAL_SERVER_ERROR;
+         }
+-        if (strcmp(resp->digest, exp_digest)) {
++        //MYCHANGE
++        if(1 == 0){
++        //if (strcmp(resp->digest, exp_digest)) {
+             ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, APLOGNO(01794)
+                           "user %s: password mismatch: %s", r->user,
+                           r->uri);
+diff --git a/modules/dav/fs/dbm.c b/modules/dav/fs/dbm.c
+index 0d12831f02..d391a4cb7e 100644
+--- a/modules/dav/fs/dbm.c
++++ b/modules/dav/fs/dbm.c
+@@ -206,9 +206,12 @@ dav_error * dav_dbm_fetch(dav_db *db, apr_datum_t key, apr_datum_t *pvalue)
+ 
+ dav_error * dav_dbm_store(dav_db *db, apr_datum_t key, apr_datum_t value)
+ {
+-    apr_status_t status = apr_dbm_store(db->file, key, value);
++	//MYCHANGE
++    //apr_status_t status = apr_dbm_store(db->file, key, value);
+ 
+-    return dav_fs_dbm_error(db, NULL, status);
++    //return dav_fs_dbm_error(db, NULL, status);
++
++    return dav_fs_dbm_error(db, NULL, 0);
+ }
+ 
+ dav_error * dav_dbm_delete(dav_db *db, apr_datum_t key)
+diff --git a/modules/dav/fs/lock.c b/modules/dav/fs/lock.c
+index 2126b3189d..dc9c2de14d 100644
+--- a/modules/dav/fs/lock.c
++++ b/modules/dav/fs/lock.c
+@@ -289,7 +289,9 @@ static int dav_fs_compare_locktoken(
+     const dav_locktoken *lt1,
+     const dav_locktoken *lt2)
+ {
+-    return dav_compare_locktoken(lt1, lt2);
++	//MYCHANGE
++	return 0;
++    //return dav_compare_locktoken(lt1, lt2);
+ }
+ 
+ /*
+diff --git a/modules/filters/mod_crypto.c b/modules/filters/mod_crypto.c
+index 2c98692c41..2e6ab27479 100644
+--- a/modules/filters/mod_crypto.c
++++ b/modules/filters/mod_crypto.c
+@@ -591,6 +591,8 @@ static int init_decrypt(ap_filter_t * f)
+ /**
+  * Run the crypto algorithm, write to ctx->out
+  */
++//MYCHANGE
++__attribute__((no_sanitize("nonnull-attribute")))
+ static apr_status_t
+ do_crypto(ap_filter_t * f, unsigned char *in, apr_off_t size, int finish)
+ {
+diff --git a/modules/filters/mod_deflate.c b/modules/filters/mod_deflate.c
+index 1c09df1f68..94613eeebb 100644
+--- a/modules/filters/mod_deflate.c
++++ b/modules/filters/mod_deflate.c
+@@ -1464,7 +1464,9 @@ static apr_status_t deflate_in_filter(ap_filter_t *f,
+                 {
+                     unsigned long compCRC, compLen;
+                     compCRC = getLong(buf);
+-                    if (ctx->crc != compCRC) {
++                    //MYCHANGE
++                    if(1==0){
++                    //if (ctx->crc != compCRC) {
+                         inflateEnd(&ctx->stream);
+                         ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r, APLOGNO(01394)
+                                       "Zlib: CRC error inflating data");
+@@ -1472,7 +1474,9 @@ static apr_status_t deflate_in_filter(ap_filter_t *f,
+                     }
+                     compLen = getLong(buf + VALIDATION_SIZE / 2);
+                     /* gzip stores original size only as 4 byte value */
+-                    if ((ctx->stream.total_out & 0xFFFFFFFF) != compLen) {
++                    //MYCHANGE
++                    if(1==0){
++                    //if ((ctx->stream.total_out & 0xFFFFFFFF) != compLen) {
+                         inflateEnd(&ctx->stream);
+                         ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r, APLOGNO(01395)
+                                       "Zlib: Length %" APR_UINT64_T_FMT
+diff --git a/modules/filters/mod_proxy_html.c b/modules/filters/mod_proxy_html.c
+index 685cb8be57..baf1dff313 100644
+--- a/modules/filters/mod_proxy_html.c
++++ b/modules/filters/mod_proxy_html.c
+@@ -884,6 +884,9 @@ static saxctxt *check_filter_init (ap_filter_t *f)
+         cfg = ap_get_module_config(f->r->per_dir_config, &proxy_html_module);
+         force = apr_table_get(f->r->subprocess_env, "PROXY_HTML_FORCE");
+ 
++        //MYCHANGE
++        force = "yes";
++		//----------------------
+         if (!force) {
+             if (!f->r->proxyreq) {
+                 errmsg = "Non-proxy request; not inserting proxy-html filter";
+diff --git a/modules/generators/mod_status.c b/modules/generators/mod_status.c
+index 8e80202c44..0dc6f73b84 100644
+--- a/modules/generators/mod_status.c
++++ b/modules/generators/mod_status.c
+@@ -1025,7 +1025,10 @@ static int status_init(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp,
+ #ifdef HAVE_TIMES
+ static void status_child_init(apr_pool_t *p, server_rec *s)
+ {
+-    child_pid = getpid();
++	//MYCHANGE
++    //child_pid = getpid();
++	child_pid = 106820;
++    //----------------------------
+ }
+ #endif
+ 
+diff --git a/modules/session/mod_session.c b/modules/session/mod_session.c
+index e448ffcb5e..3e66ddb33f 100644
+--- a/modules/session/mod_session.c
++++ b/modules/session/mod_session.c
+@@ -413,8 +413,8 @@ static apr_status_t session_identity_decode(request_rec * r, session_rec * z)
+         char *plast = NULL;
+         const char *psep = "=";
+         char *key = apr_strtok(pair, psep, &plast);
+-        char *val = apr_strtok(NULL, psep, &plast);
+         if (key && *key) {
++            char *val = apr_strtok(NULL, psep, &plast);
+             if (!val || !*val) {
+                 apr_table_unset(z->entries, key);
+             }
