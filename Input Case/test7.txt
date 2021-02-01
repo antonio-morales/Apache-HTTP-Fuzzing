@@ -1,0 +1,7 @@
+GET /show-tech HTTP/1.1
+User-Agent: cisco-IOS
+Host: 1.1.12.1
+Authorization: Basic YWRtaW46Y2lzY28=
+Date: Fri, 01 Mar 2002 00:30:47 GMT
+Connection: close
+

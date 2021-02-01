@@ -1,0 +1,7 @@
+GET http://username:password@[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]:80/ HTTP/1.1
+User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)
+Host: 127.0.0.1
+Accept-Language: en-us
+Accept-Encoding: gzip, deflate
+Connection: Keep-Alive
+

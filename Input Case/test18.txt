@@ -1,0 +1,8 @@
+GET /images/layout/logo.png HTTP/1.0
+User-Agent: Wget/1.12 (linux-gnu)
+Accept: */*
+Host: packetlife.net
+If-Match: *
+If-Unmodified-Since: Wed, 21 Oct 2015 07:28:00 GMT
+Connection: Keep-Alive
+

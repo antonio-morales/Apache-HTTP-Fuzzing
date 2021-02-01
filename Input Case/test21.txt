@@ -1,0 +1,5 @@
+GET /index.html HTTP/1.1
+Host: www.example.com
+Connection: upgrade
+Upgrade: http1.1, foo2
+

@@ -1,0 +1,7 @@
+GET http://127.0.0.1:8080/foo HTTP/1.1
+Host: www.wireshark.org:8080
+User-Agent: curl/7.46.0
+Accept: */*
+Connection: close
+Accept-Encoding: chunked, gzip
+
