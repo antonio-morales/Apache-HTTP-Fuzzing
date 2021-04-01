@@ -1,3 +1,5 @@
+#include "custom_mutator_helpers.h"
+
 typedef enum{
     BRUTE,
     DICT3,
