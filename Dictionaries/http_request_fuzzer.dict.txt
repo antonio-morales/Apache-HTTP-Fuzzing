@@ -11,7 +11,7 @@
 "PATCH"
 "POST"
 "PUT"
-"TRACE"
+"TRACE" 
 
 
 # Webdav/caldav verbs
